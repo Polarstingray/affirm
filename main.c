@@ -1,37 +1,59 @@
 #include <stdio.h>
-#include <stdlib.h> // for general environment functions
+#include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <time.h> // for seeding rand
 
 #define CACHE_SIZE 4
 #define LIMIT 20
 
-int readfile(const char* filepath, char * lines[]) {
-    /*
-    Reads lines from a file into an array of strings.
-    Returns number of lines read, or -1 on error.
-    */
-
+int readfile(const char *filepath, char *lines[]) {
     FILE *file = fopen(filepath, "r");
-    if (file == NULL) {
+    if (!file) return -1;
+
+    size_t capacity = 512;
+    size_t len = 0;
+    char *buffer = malloc(capacity);
+    if (!buffer) {
+        fclose(file);
         return -1;
     }
 
-    // using buffer to read from file
-    // char *lines[1024];
     int count = 0;
-    char buffer[256];   
+    int c; 
+    // read in lines char by char
+    while ((c = fgetc(file)) != EOF) {
+        if (len + 1 >= capacity) {
+            capacity *= 2;
+            char *tmp = realloc(buffer, capacity);
+            if (!tmp) {
+                free(buffer);
+                fclose(file);
+                return -1;
+            }
+            buffer = tmp;
+        }
 
-    // read line from stream (file) into buffer
-    while (fgets(buffer, sizeof(buffer), file)) {
-        buffer[strcspn(buffer, "\n")] = 0; // replace newlines
-        lines[count] = strdup(buffer); // allocate heap MEMORY (essentially malloc)
-        
-        count++;
+        if (c == '\n') {
+            buffer[len] = '\0';
+            if (len > 0) {
+                lines[count++] = strdup(buffer);
+            }
+            len = 0;
+        } else { // reading chars into buffer
+            buffer[len++] = (char)c; 
+        }
     }
+
+    if (len > 0) {
+        buffer[len] = '\0';
+        lines[count++] = strdup(buffer);
+    }
+
+    free(buffer);
     fclose(file);
     return count;
 }
+
 
 void free_memory(char *lines[], int count) {
     for (int i = 0; i < count; i++) {
@@ -51,6 +73,7 @@ void cache(const char* filepath, const char* line) {
 }
 
 void clear_cache(const char* filepath) {
+    printf("Clearing cache...\n");
     FILE *file = fopen(filepath, "w");
     fclose(file);
 }
@@ -81,7 +104,7 @@ int main(int argc, char* argv[]) {
     char filepath[256];
     snprintf(filepath, sizeof(filepath), "affirmations/%s.txt", ID);
     // read file lines into array
-    char *lines[1024];
+    char *lines[2048];
     int count = readfile(filepath, lines);
     if (count < 0) {
         printf("Failed to read file\n");
@@ -104,7 +127,7 @@ int main(int argc, char* argv[]) {
 
     int found_in_cache = 0;
     int attempts = 0;
-    while (found_in_cache == 0 && attempts < LIMIT) {
+    do {
         attempts++;
         if (cache_count >= CACHE_SIZE) { // clear cache
             clear_cache(filepath);
@@ -119,13 +142,14 @@ int main(int argc, char* argv[]) {
 
                 int cached_choice = cache_entry(tokens, cached_id);
                 if (strcmp(ID, cached_id) == 0 && choice == cached_choice) { // found in cache, pick new
+                    printf("Found in cache, picking new...\n");
                     found_in_cache = 1;
                     choice = rand() % count;
                     break;
                 } 
             } // not found in cache, proceed
         }
-    }
+    } while (found_in_cache != 0 && attempts < LIMIT);
 
     char str[24]; 
     printf("%s\n", lines[choice]);
