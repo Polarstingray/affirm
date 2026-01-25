@@ -3,14 +3,14 @@
 #include <string.h>
 #include <time.h> // for seeding rand
 
-#define CACHE_SIZE 4
+#define CACHE_SIZE 100
 #define LIMIT 20
 
 int readfile(const char *filepath, char *lines[]) {
     FILE *file = fopen(filepath, "r");
     if (!file) return -1;
 
-    size_t capacity = 512;
+    size_t capacity = 256;
     size_t len = 0;
     char *buffer = malloc(capacity);
     if (!buffer) {
@@ -127,8 +127,13 @@ int main(int argc, char* argv[]) {
 
     int found_in_cache = 0;
     int attempts = 0;
+    int last_try = 0;
     do {
         attempts++;
+        if (attempts >= LIMIT) {
+            clear_cache(filepath);
+            last_try = 1;
+        }
         if (cache_count >= CACHE_SIZE) { // clear cache
             clear_cache(filepath);
             cache_count = 0;
@@ -142,15 +147,14 @@ int main(int argc, char* argv[]) {
 
                 int cached_choice = cache_entry(tokens, cached_id);
                 if (strcmp(ID, cached_id) == 0 && choice == cached_choice) { // found in cache, pick new
-                    printf("Found in cache, picking new...\n");
+                    // printf("Found in cache, picking new...\n");
                     found_in_cache = 1;
                     choice = rand() % count;
                     break;
                 } 
             } // not found in cache, proceed
         }
-    } while (found_in_cache != 0 && attempts < LIMIT);
-
+    } while (found_in_cache != 0 && last_try == 0);
     char str[24]; 
     printf("%s\n", lines[choice]);
     snprintf(str, sizeof(str), "%s:%d", ID, choice);
