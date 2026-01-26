@@ -1,5 +1,6 @@
 .env
 cache/*
 main
-main.o
+*.o
+affirm
 affirmations/A.txt
