@@ -6,10 +6,17 @@ This program caches recently queried results and, upon hits, re rolls for a new 
 
 
 **Usage**  
-run:   
-_make  
-make install  
-affirm A_  
+run:  
+    cd /path/to/affirm
+    make  
+    make install  
+    echo "export PATH=$PATH:/$HOME/.local/bin" >> ~/.bashrc
+affirm Q
+affirm A 
+
+\# or run in working directory:
+cd /path/to/affirm
+./affirm Q
 
 **Adding More and Making Changes**   
 To add more content, either directly edit the $HOME/.local/share/affirm/*.txt files directly or add your own with its own unique id <id>.txt
