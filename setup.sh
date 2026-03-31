@@ -1,20 +1,28 @@
-#!/bin/bash
-set -euo pipefail
-echo "setting up affirm..."
+#!/bin/sh
 
-JOB_DIR="${1:-$(cd "$(dirname "$0")" && pwd)}"
-cd "$JOB_DIR"
+set -e
 
-echo "cleaning..."
-make clean
-echo "compiling..."
-make
-echo "creating directories and installing binary..."
-make install
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+OUT_DIR="$PROJECT_DIR/out"
 
-BIN_DIR="$HOME/.local/bin"
-if ! echo "$PATH" | grep -q "$BIN_DIR"; then
-    echo "adding $BIN_DIR to $HOME/.bashrc"
-    echo "export PATH=\"$PATH:$BIN_DIR\"" >> "$HOME/.bashrc"
-    export PATH="$PATH:$BIN_DIR"
-fi
+# compile
+echo "Building project..."
+make -C "$PROJECT_DIR" clean
+make -C "$PROJECT_DIR"
+
+# 2. Create output directory structure
+echo "Creating output directory structure..."
+rm -rf "$OUT_DIR"
+mkdir -p "$OUT_DIR/bin"
+mkdir -p "$OUT_DIR/data/"
+
+
+# 3. Copy build artifacts
+echo "Copying build artifacts..."
+cp "$PROJECT_DIR/affirm "$OUT_DIR/bin/"
+cp "$PROJECT_DIR/data/*" "$OUT_DIR/data/"
+
+# 4. make executable
+chmod +x "$OUT_DIR/bin/affirm"
+
+echo "Done!"
