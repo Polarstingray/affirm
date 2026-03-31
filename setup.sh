@@ -19,7 +19,7 @@ mkdir -p "$OUT_DIR/data/"
 
 # 3. Copy build artifacts
 echo "Copying build artifacts..."
-cp "$PROJECT_DIR/affirm "$OUT_DIR/bin/"
+cp "$PROJECT_DIR/affirm" "$OUT_DIR/bin/"
 cp "$PROJECT_DIR/data/*" "$OUT_DIR/data/"
 
 # 4. make executable
